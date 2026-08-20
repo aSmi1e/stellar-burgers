@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import '../../index.css';
 import styles from './app.module.css';
@@ -20,19 +21,21 @@ import {
   Register,
   ResetPassword
 } from '@pages';
+import { useDispatch } from '../../services/store';
+import { fetchIngredients } from '@slices';
 
 const App = () => {
   const location = useLocation();
   const navigate = useNavigate();
-
-  // Если в location есть background — значит, мы попали на этот адрес
-  // кликом внутри приложения, и текущий маршрут нужно отрисовать как модалку
-  // поверх «фоновой» страницы, а не отдельной страницей.
+  const dispatch = useDispatch();
   const background = location.state?.background;
 
   const handleModalClose = () => {
     navigate(-1);
   };
+  useEffect(() => {
+    dispatch(fetchIngredients());
+  }, [dispatch]);
 
   return (
     <div className={styles.app}>
@@ -91,9 +94,6 @@ const App = () => {
             </ProtectedRoute>
           }
         />
-
-        {/* Прямой переход по ссылке на карточку ингредиента/заказа —
-            открываем как полноценную страницу */}
         <Route
           path='/ingredients/:id'
           element={
@@ -126,9 +126,6 @@ const App = () => {
 
         <Route path='*' element={<NotFound404 />} />
       </Routes>
-
-      {/* Модалки рисуются только если у нас есть background,
-          то есть переход был кликом внутри приложения */}
       {background && (
         <Routes>
           <Route
