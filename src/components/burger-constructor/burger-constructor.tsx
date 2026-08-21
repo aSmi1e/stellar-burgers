@@ -1,16 +1,15 @@
 import { FC, useMemo } from 'react';
 import { TConstructorIngredient } from '@utils-types';
 import { BurgerConstructorUI } from '@ui';
+import { useSelector } from '../../services/store';
+import { selectConstructorItems } from '@selectors';
 
 export const BurgerConstructor: FC = () => {
-  /** TODO: взять переменные constructorItems, orderRequest и orderModalData из стора */
-  const constructorItems = {
-    bun: {
-      price: 0
-    },
-    ingredients: []
-  };
+  const constructorItems = useSelector(selectConstructorItems);
 
+  /** TODO (следующий шаг): взять orderRequest и orderModalData из стора заказа,
+   * а onOrderClick заменить на диспатч thunk-а оформления заказа
+   * (с редиректом на /login для неавторизованных). */
   const orderRequest = false;
 
   const orderModalData = null;
@@ -29,8 +28,6 @@ export const BurgerConstructor: FC = () => {
       ),
     [constructorItems]
   );
-
-  return null;
 
   return (
     <BurgerConstructorUI
