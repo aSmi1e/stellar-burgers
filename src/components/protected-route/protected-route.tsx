@@ -1,4 +1,8 @@
 import { FC, ReactElement } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
+import { Preloader } from '@ui';
+import { useSelector } from '../../services/store';
+import { selectIsAuthChecked, selectIsAuthenticated } from '@selectors';
 
 type TProtectedRouteProps = {
   /** true — маршрут только для НЕавторизованных (login, register и т.д.) */
@@ -6,16 +10,26 @@ type TProtectedRouteProps = {
   children: ReactElement;
 };
 
-/**
- * TODO (шаг 2, авторизация):
- * 1. Дождаться проверки токена (isAuthChecked из стора), пока идёт — <Preloader />.
- * 2. Взять isAuthenticated из стора через useSelector.
- * 3. Если маршрут для авторизованных (onlyUnAuth === false) и пользователь
- *    НЕ авторизован — <Navigate to='/login' state={{ from: location }} replace />.
- * 4. Если маршрут только для НЕавторизованных (onlyUnAuth === true) и пользователь
- *    авторизован — <Navigate to={location.state?.from || '/'} replace />.
- */
 export const ProtectedRoute: FC<TProtectedRouteProps> = ({
   onlyUnAuth = false,
   children
-}) => children;
+}) => {
+  const location = useLocation();
+  const isAuthChecked = useSelector(selectIsAuthChecked);
+  const isAuthenticated = useSelector(selectIsAuthenticated);
+
+  if (!isAuthChecked) {
+    return <Preloader />;
+  }
+
+  if (!onlyUnAuth && !isAuthenticated) {
+    return <Navigate to='/login' state={{ from: location }} replace />;
+  }
+
+  if (onlyUnAuth && isAuthenticated) {
+    const from = location.state?.from?.pathname || '/';
+    return <Navigate to={from} replace />;
+  }
+
+  return children;
+};
