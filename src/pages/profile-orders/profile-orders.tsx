@@ -1,23 +1,30 @@
+import { Preloader } from '@ui';
 import { ProfileOrdersUI } from '@ui-pages';
 import { FC, useEffect } from 'react';
 import { useDispatch, useSelector } from '../../services/store';
-import { wsProfileOrdersConnect, wsProfileOrdersDisconnect } from '@slices';
-import { selectProfileOrders } from '@selectors';
-import { WS_URL } from '../../utils/ws-url';
-import { getCookie } from '../../utils/cookie';
+import { fetchOrders } from '@slices';
+import { selectProfileOrders, selectProfileOrdersLoading } from '@selectors';
+
+const POLLING_INTERVAL = 3000;
 
 export const ProfileOrders: FC = () => {
   const dispatch = useDispatch();
   const orders = useSelector(selectProfileOrders);
+  const isLoading = useSelector(selectProfileOrdersLoading);
 
   useEffect(() => {
-    const token = getCookie('accessToken')?.replace('Bearer ', '');
-    dispatch(wsProfileOrdersConnect(`${WS_URL}/orders?token=${token}`));
+    dispatch(fetchOrders());
 
-    return () => {
-      dispatch(wsProfileOrdersDisconnect());
-    };
+    const intervalId = setInterval(() => {
+      dispatch(fetchOrders());
+    }, POLLING_INTERVAL);
+
+    return () => clearInterval(intervalId);
   }, [dispatch]);
+
+  if (isLoading && !orders.length) {
+    return <Preloader />;
+  }
 
   return <ProfileOrdersUI orders={orders} />;
 };

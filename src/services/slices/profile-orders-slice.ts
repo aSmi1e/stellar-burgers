@@ -1,10 +1,6 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { getOrdersApi } from '@api';
 import { TOrder } from '@utils-types';
-
-export type TProfileOrdersMessage = {
-  success: boolean;
-  orders: TOrder[];
-};
 
 type TProfileOrdersState = {
   orders: TOrder[];
@@ -18,40 +14,31 @@ const initialState: TProfileOrdersState = {
   error: null
 };
 
+export const fetchOrders = createAsyncThunk(
+  'profileOrders/fetchOrders',
+  async () => getOrdersApi()
+);
+
 const profileOrdersSlice = createSlice({
   name: 'profileOrders',
   initialState,
-  reducers: {
-    wsProfileOrdersConnect: (state, action: PayloadAction<string>) => {},
-    wsProfileOrdersDisconnect: () => {},
-    wsProfileOrdersConnecting: (state) => {
-      state.isLoading = true;
-      state.error = null;
-    },
-    wsProfileOrdersOpen: (state) => {
-      state.isLoading = false;
-    },
-    wsProfileOrdersMessage: (
-      state,
-      action: PayloadAction<TProfileOrdersMessage>
-    ) => {
-      state.orders = action.payload.orders;
-      state.isLoading = false;
-    },
-    wsProfileOrdersError: (state, action: PayloadAction<string>) => {
-      state.error = action.payload;
-      state.isLoading = false;
-    }
+  reducers: {},
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchOrders.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchOrders.fulfilled, (state, action) => {
+        state.orders = action.payload;
+        state.isLoading = false;
+      })
+      .addCase(fetchOrders.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error =
+          action.error.message ?? 'Не удалось загрузить историю заказов';
+      });
   }
 });
-
-export const {
-  wsProfileOrdersConnect,
-  wsProfileOrdersDisconnect,
-  wsProfileOrdersConnecting,
-  wsProfileOrdersOpen,
-  wsProfileOrdersMessage,
-  wsProfileOrdersError
-} = profileOrdersSlice.actions;
 
 export default profileOrdersSlice.reducer;

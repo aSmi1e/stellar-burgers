@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { orderBurgerApi, getOrderByNumberApi } from '@api';
 import { TOrder } from '@utils-types';
+import { fetchFeeds } from './feed-slice';
 
 type TOrderState = {
   orderRequest: boolean;
@@ -18,8 +19,11 @@ const initialState: TOrderState = {
 
 export const createOrder = createAsyncThunk<TOrder, string[]>(
   'order/createOrder',
-  async (ingredientIds) => {
+  async (ingredientIds, { dispatch }) => {
     const response = await orderBurgerApi(ingredientIds);
+    // Не дожидаясь ближайшего опроса ленты, сразу подтягиваем свежие данные —
+    // так новый заказ появляется в /feed без задержки.
+    dispatch(fetchFeeds());
     // response.order не содержит ingredients (в отличие от TOrder из фида/истории) —
     // добираем их из того, что сами же отправили, чтобы форма данных была единой.
     return { ...response.order, ingredients: ingredientIds };
