@@ -29,30 +29,20 @@ const App = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  // Если в location есть background — значит, мы попали на этот адрес
-  // кликом внутри приложения, и текущий маршрут нужно отрисовать как модалку
-  // поверх «фоновой» страницы, а не отдельной страницей.
   const background = location.state?.background;
 
   const handleModalClose = () => {
     navigate(-1);
   };
 
-  // Ингредиенты нужны на нескольких страницах (конструктор, заказы, лента),
-  // поэтому грузим их один раз при старте приложения.
   useEffect(() => {
     dispatch(fetchIngredients());
-    // Проверяем, есть ли валидный токен — от этого зависит, что решит ProtectedRoute
     dispatch(checkUserAuth());
   }, [dispatch]);
 
   return (
     <div className={styles.app}>
       <AppHeader />
-
-      {/* Пока открыта модалка, фоновая страница видна, но должна быть
-          полностью не кликабельной — иначе через оверлей можно "достучаться"
-          до карточек под ним и открыть ещё одну модалку поверх текущей. */}
       <div style={background ? { pointerEvents: 'none' } : undefined}>
         <Routes location={background || location}>
           <Route path='/' element={<ConstructorPage />} />
@@ -107,9 +97,6 @@ const App = () => {
               </ProtectedRoute>
             }
           />
-
-          {/* Прямой переход по ссылке на карточку ингредиента/заказа —
-              открываем как полноценную страницу */}
           <Route
             path='/ingredients/:id'
             element={
@@ -145,9 +132,6 @@ const App = () => {
           <Route path='*' element={<NotFound404 />} />
         </Routes>
       </div>
-
-      {/* Модалки рисуются только если у нас есть background,
-          то есть переход был кликом внутри приложения */}
       {background && (
         <Routes>
           <Route

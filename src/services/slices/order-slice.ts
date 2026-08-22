@@ -21,11 +21,7 @@ export const createOrder = createAsyncThunk<TOrder, string[]>(
   'order/createOrder',
   async (ingredientIds, { dispatch }) => {
     const response = await orderBurgerApi(ingredientIds);
-    // Не дожидаясь ближайшего опроса ленты, сразу подтягиваем свежие данные —
-    // так новый заказ появляется в /feed без задержки.
     dispatch(fetchFeeds());
-    // response.order не содержит ingredients (в отличие от TOrder из фида/истории) —
-    // добираем их из того, что сами же отправили, чтобы форма данных была единой.
     return { ...response.order, ingredients: ingredientIds };
   }
 );
