@@ -1,8 +1,14 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 import path from 'path';
 
 const BUN_NAME = 'Краторная булка N-200i';
 const MAIN_NAME = 'Биокотлета из марсианской Магнолии';
+
+function getConstructor(page: Page) {
+  return page
+    .locator('section')
+    .filter({ has: page.getByText('Оформить заказ') });
+}
 
 test.describe('Конструктор бургера: добавление ингредиентов', () => {
   test.beforeEach(async ({ page }) => {
@@ -20,10 +26,9 @@ test.describe('Конструктор бургера: добавление ин�
       .getByText('Добавить')
       .click();
 
-    const constructor = page.locator('section');
-    // булка после добавления одновременно отображается сверху и снизу
+    const constructor = getConstructor(page);
     await expect(constructor.getByText(BUN_NAME)).toHaveCount(2);
-    await expect(page.getByText('Выберите булки')).toHaveCount(0);
+    await expect(constructor.getByText('Выберите булки')).toHaveCount(0);
   });
 
   test('добавление начинки в конструктор', async ({ page }) => {
@@ -32,9 +37,9 @@ test.describe('Конструктор бургера: добавление ин�
       .getByText('Добавить')
       .click();
 
-    const constructor = page.locator('section');
+    const constructor = getConstructor(page);
     await expect(constructor.getByText(MAIN_NAME)).toBeVisible();
-    await expect(page.getByText('Выберите начинку')).toHaveCount(0);
+    await expect(constructor.getByText('Выберите начинку')).toHaveCount(0);
   });
 });
 
@@ -55,7 +60,6 @@ test.describe('Модальное окно ингредиента', () => {
 
     const modal = page.locator('#modals');
     await expect(modal.getByText(MAIN_NAME)).toBeVisible();
-    // убеждаемся, что открылась карточка не первого попавшегося, а нужного ингредиента
     await expect(modal.getByText('4242')).toBeVisible();
   });
 
@@ -76,7 +80,6 @@ test.describe('Модальное окно ингредиента', () => {
     const modal = page.locator('#modals');
     await expect(modal.getByText(BUN_NAME)).toBeVisible();
 
-    // второй оверлей, элемент внутри портала modals, кликаем в его угол, чтобы не задеть окно
     await page
       .locator('#modals > div')
       .nth(1)
@@ -92,7 +95,6 @@ test.describe('Оформление заказа', () => {
       url: '**/api/**'
     });
 
-    // подставляем фейковые токены авторизации до того, как страница успеет что-либо запросить с их использованием.
     await context.addCookies([
       {
         name: 'accessToken',
@@ -123,13 +125,13 @@ test.describe('Оформление заказа', () => {
     await page.getByText('Оформить заказ').click();
 
     const modal = page.locator('#modals');
-
     await expect(modal.getByText('12345')).toBeVisible();
 
     await page.locator('#modals button').click();
     await expect(modal.getByText('12345')).toHaveCount(0);
 
-    await expect(page.getByText('Выберите булки').first()).toBeVisible();
-    await expect(page.getByText('Выберите начинку')).toBeVisible();
+    const constructor = getConstructor(page);
+    await expect(constructor.getByText('Выберите булки')).toHaveCount(2);
+    await expect(constructor.getByText('Выберите начинку')).toBeVisible();
   });
 });
